@@ -4,6 +4,7 @@ A practical guide to using a Mac Mini M4 as a computational accelerator for Jupy
 
 ## Table of Contents
 - [Overview](#overview)
+- [Recommended Way to Use This Guide](#recommended-way-to-use-this-guide)
 - [Prerequisites](#prerequisites)
 - [Architecture](#architecture)
 - [Project Structure](#project-structure)
@@ -27,6 +28,46 @@ A practical guide to using a Mac Mini M4 as a computational accelerator for Jupy
 - **Connection:** Same desk, ethernet cable, ~125 MB/s transfer speeds
 
 **Key Principle:** iMac is the source of truth for code and data. Mac Mini is ephemeral compute.
+
+## Recommended Way to Use This Guide
+
+**Honestly, the fastest path:**
+
+1. **Clone this repo**
+   ```bash
+   git clone https://github.com/brianjmalone/MM4_workhorse_project.git
+   cd MM4_workhorse_project
+   ```
+
+2. **Open it in Claude Code**
+   ```bash
+   claude-code .
+   ```
+
+3. **Update `Claude.md` with your specifics**
+   - Your hardware setup (what machines you have)
+   - Your SSH configuration (hostname, paths)
+   - Your project goals (what you're trying to compute)
+   - Any custom requirements
+
+4. **Let Claude Code make the tweaks**
+   - Ask: "Help me adapt this setup for my Mac Studio and MacBook Pro"
+   - Ask: "I need to add scikit-learn and matplotlib, update everything"
+   - Ask: "My SSH hostname is different, fix all the scripts"
+   - The CLI agent will interactively update scripts, configs, and documentation
+
+5. **Done!**
+   - Test with your first notebook
+   - Claude Code can help debug any issues that come up
+
+**Why this works:**
+- The hard parts are already figured out (Docker setup, SSH patterns, volume mounts)
+- You just need the specifics changed for your environment
+- Claude Code reads `Claude.md` automatically and knows your context
+- Interactive tweaks are faster than manual editing
+- The agent can verify changes work together
+
+**Alternative:** Read through the Prerequisites and Getting Started sections below if you prefer to understand every detail first.
 
 ## Prerequisites
 
@@ -201,13 +242,46 @@ If Mac Mini needs to write to iMac's folders:
 ssh macmini 'ls ~/MM4_workhorse_project/results'
 ```
 
-### 4. Create Your Environment
+### 4. Understanding requirements.txt
+
+**What it is:**
+- A file listing Python packages needed for your code
+- Docker reads this file and installs packages inside the container
+- Ensures remote environment matches your local development environment
+
+**This repo already includes one:**
+```txt
+pandas==2.0.3
+numpy==1.24.3
+jupyter==1.0.0
+nbconvert==7.16.4
+```
+
+**You only need to update it when:**
+- Adding new packages to your project (e.g., scikit-learn, matplotlib)
+- Upgrading package versions
+- Starting a new project from scratch
+
+**How to update requirements.txt:**
+
+**Option A: Add packages manually (recommended for new dependencies)**
 ```bash
-# Export your current Python environment
+# Edit requirements.txt and add the package
+echo "scikit-learn==1.3.0" >> requirements.txt
+
+# Rebuild Docker image (next run will install the new package)
+# The rebuild happens automatically when you run ./scripts/run-remote.sh
+```
+
+**Option B: Export from existing environment (for new projects)**
+```bash
+# If you have a conda/pip environment with packages you want to use
 conda list --export > requirements.txt
 # or
 pip freeze > requirements.txt
 ```
+
+**Important:** After changing `requirements.txt`, the next Docker build will be slower (installs new packages), but subsequent builds use cached layers.
 
 ### 5. Test the Workflow
 ```bash
